@@ -25,7 +25,6 @@ def get_score(str):
 
 lines = []
 result = 0
-result_array = []
 multiply_array = []
 with open(os.getcwd() + "\input.txt", "r") as file:
     for line in file:
@@ -35,7 +34,6 @@ with open(os.getcwd() + "\input.txt", "r") as file:
             multiply_array.append(1)
         score, power = get_score(line)
         result += score
-        result_array.append(score)
         for j in range(multiply_array[idx]):
             for i in range(power):
                 if idx + i + 1 >= len(lines):
