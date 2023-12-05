@@ -3,7 +3,7 @@ import os
 
 from collections import OrderedDict
 
-from multiprocessing import Pool, TimeoutError
+from multiprocessing import Pool, cpu_count 
 from functools import partial
 
 seeds = []
@@ -46,7 +46,7 @@ if __name__ == '__main__':
     light_to_temperature = {}
     temperature_to_humidity = {}
     humidity_to_location = {}
-    with open(os.getcwd() + "\input.txt", "r") as file:
+    with open("./input.txt", "r") as file:
         current_map = {}
         for line in file:
             line = line.strip()
@@ -122,9 +122,11 @@ if __name__ == '__main__':
     locations = []
     for seed_start, len in zip(*[iter(seeds)]*2):
         print("Seeds", seed_start, len)
-        with Pool(processes=12) as pool:
+        with Pool(processes=cpu_count()) as pool:
             all_maps = [seed_to_soil_ordered, soil_to_fertilizer_ordered, fertilizer_to_water_ordered, water_to_light_ordered, light_to_temperature_ordered, temperature_to_humidity_ordered, humidity_to_location_ordered]
-            locations += pool.map(partial(search_func, maps=all_maps), range(int(seed_start), int(seed_start) + int(len)))
+            sublocations = pool.map(partial(search_func, maps=all_maps), range(int(seed_start), int(seed_start) + int(len)))
+            sublocations.sort()
+            locations.append(sublocations[0])
     #    for seed in range(int(seed_start), int(seed_start) + int(len)):
     #        #print("Seed", seed)
     #        search_for = int(seed)
@@ -138,4 +140,4 @@ if __name__ == '__main__':
 
     #print(locations)
     locations.sort()
-    print(locations)
+    print(locations[0])
