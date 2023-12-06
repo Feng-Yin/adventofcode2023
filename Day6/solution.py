@@ -3,15 +3,17 @@ import os
 
 from collections import OrderedDict
 
-from multiprocessing import Pool, cpu_count 
+from multiprocessing import Pool, cpu_count
 from functools import partial
+
 
 def search_func(time, totaltime, distance):
     if (totaltime - time) * time > distance:
         return 1
     return 0
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     times = []
     distances = []
     with open("./input.txt", "r") as file:
@@ -27,7 +29,10 @@ if __name__ == '__main__':
         print("search", time, distance)
         ways = 0
         with Pool(processes=cpu_count()) as pool:
-            ways = pool.map(partial(search_func, totaltime=int(time), distance=int(distance)), range(int(time)))
+            ways = pool.map(
+                partial(search_func, totaltime=int(time), distance=int(distance)),
+                range(int(time)),
+            )
         result *= sum(ways)
     print(result)
 
@@ -35,6 +40,13 @@ if __name__ == '__main__':
     print("search", "".join(times), "".join(distances))
     ways = 0
     with Pool(processes=cpu_count()) as pool:
-        ways = pool.map(partial(search_func, totaltime=int("".join(times)), distance=int("".join(distances))), range(int("".join(times))))
+        ways = pool.map(
+            partial(
+                search_func,
+                totaltime=int("".join(times)),
+                distance=int("".join(distances)),
+            ),
+            range(int("".join(times))),
+        )
     result *= sum(ways)
     print(result)
