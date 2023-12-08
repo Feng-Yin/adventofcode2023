@@ -6,6 +6,7 @@ from collections import OrderedDict
 
 from multiprocessing import Pool, cpu_count
 from functools import partial
+from math import lcm
 
 def is_done(starts):
     for s in starts:
@@ -34,6 +35,19 @@ def search_func(idx, starts, network, steps, directions, parts):
         ret.append(next)
     return ret
 
+def search_func2(idx, pathes):
+    tmp = []
+    for i in range(len(pathes)):
+        tmp.append(pathes[i][idx])
+    if is_done(tmp):
+        return 1
+    return 0
+
+def find_z(path):
+    for i in range(len(path)):
+        if path[i][2] == "Z":
+            return i
+    return -1
 
 if __name__ == "__main__":
     directions = ""
@@ -66,21 +80,17 @@ if __name__ == "__main__":
     print(starts)
     while True:
         pathes = [[]]
-        parts = 10000 * len(directions)
+        parts = 1000 * len(directions)
+        print("build")
         with Pool(processes=cpu_count()) as pool:
             pathes = pool.map(partial(search_func, starts=starts, network=network, steps=steps, directions=directions, parts=parts), range(len(starts)))
 
-        #for idx, start in enumerate(starts):
-        #    if d == "L":
-        #        starts[idx] = network[starts[idx]][0]
-        #    else:
-        #        starts[idx] = network[starts[idx]][1]
-        #print(pathes)
-        r, i = is_done2(pathes)
-        steps += i
-        if r:
-            break
-        starts = []
-        for p in pathes:
-            starts.append(p[-1])
-    print(steps + 1)
+        result = 1
+        num = []
+        for path in pathes:
+            index = find_z(path) + 1
+            num.append(index)
+            print(index)
+            result = lcm(result, index)
+        print(result)
+        break
