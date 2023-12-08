@@ -13,13 +13,26 @@ def is_done(starts):
             return False
     return True
 
-def search_func(idx, starts, network, steps, directions):
-    d = directions[steps % len(directions)]
-    if d == "L":
-        starts[idx] = network[starts[idx]][0]
-    else:
-        starts[idx] = network[starts[idx]][1]
-    return starts[idx]
+def is_done2(pathes):
+    for i in range(len(pathes[0])):
+        slice = []
+        for p in pathes:
+            slice.append(p[i])
+        if is_done(slice):
+            return True, i
+    return False, len(pathes[0])
+
+def search_func(idx, starts, network, steps, directions, parts):
+    ret = []
+    next = starts[idx]
+    for i in range(parts):
+        d = directions[ i % len(directions)]
+        if d == "L":
+            next = network[next][0]
+        else:
+            next = network[next][1]
+        ret.append(next)
+    return ret
 
 
 if __name__ == "__main__":
@@ -52,18 +65,22 @@ if __name__ == "__main__":
 
     print(starts)
     while True:
-        if is_done(starts):
-            break
-        d = directions[steps % len(directions)]
-    
+        pathes = [[]]
+        parts = 10000 * len(directions)
         with Pool(processes=cpu_count()) as pool:
-            starts = pool.map(partial(search_func, starts=starts, network=network, steps=steps, directions=directions), range(len(starts)))
+            pathes = pool.map(partial(search_func, starts=starts, network=network, steps=steps, directions=directions, parts=parts), range(len(starts)))
 
         #for idx, start in enumerate(starts):
         #    if d == "L":
         #        starts[idx] = network[starts[idx]][0]
         #    else:
         #        starts[idx] = network[starts[idx]][1]
-        #print(starts)
-        steps += 1
-    print(steps)
+        #print(pathes)
+        r, i = is_done2(pathes)
+        steps += i
+        if r:
+            break
+        starts = []
+        for p in pathes:
+            starts.append(p[-1])
+    print(steps + 1)
