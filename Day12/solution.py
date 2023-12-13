@@ -7,6 +7,8 @@ from collections import OrderedDict
 from multiprocessing import Pool, cpu_count
 from functools import partial
 import numpy as np
+from math import comb
+from itertools import combinations
 
 
 def find_nth_occurrence(string, sub_string, n):
@@ -95,6 +97,8 @@ def get_conbinations2(idx, maps, poss):
     possibilities = 0
     for i in range(0, 2**num_of_q):
         str_cp = str
+        if 2 ** sum(pos-str.count("#")) > i:
+            break
         for qi in range(num_of_q):
             if i % 2 == 1:
                 index = find_nth_occurrence(str, "?", qi + 1)
@@ -112,17 +116,11 @@ def get_conbinations2(idx, maps, poss):
     return possibilities
 
 
-def sub_posi(i, stri, pos):
+def sub_posi(i, stri, pos, fullset):
     str_cp = stri
-    num_of_q = stri.count("?")
-    for qi in range(num_of_q):
-        if i % 2 == 1:
-            index = find_nth_occurrence(stri, "?", qi + 1)
-            # print(f"the {qi+1}th ? is at {index}")
-            str_cp = str_cp[:index] + "#" + str_cp[index + 1 :]
-        i = int(i / 2)
-        if i == 0:
-            break
+    for qi in fullset[i]:
+        index = find_nth_occurrence(stri, "?", qi + 1)
+        str_cp = str_cp[:index] + "#" + str_cp[index + 1 :]
     str_cp = str_cp.replace("?", ".")
     # print(f"checking", str_cp)
     # print("=" * 30)
@@ -151,6 +149,23 @@ def simplify(str, pos):
     e = min(index2 + 1, len(str))
     print("simplify to", str[index1 : index2 + 1], pos)
     return str[index1 : index2 + 1], pos
+
+def get_conbinations2(idx, strs, poss):
+    num_of_q = strs[idx].count("?")
+    num_of_sharp = strs[idx].count("#")
+    q_needed = sum(poss[idx]) - num_of_sharp
+    #print(f"checking {strs[idx]} {poss[idx]} with {num_of_q} ? and we need {q_needed} #")
+    pathes = []
+    fullset = [list(c) for c in combinations(range(num_of_q), q_needed)]
+    # with Pool(processes=cpu_count()) as pool:
+    #     pathes = pool.map(
+    #         partial(sub_posi, stri=str2, pos=pos2, fullset=fullset), range(comb(num_of_q, q_needed))
+    #     )
+    for i in range(comb(num_of_q, q_needed)):
+        pathes.append(sub_posi(i, strs[idx], poss[idx], fullset))
+    possibilities = sum(pathes)
+    #print(strs[idx], "has", possibilities, "possibilities")
+    return possibilities
 
 
 if __name__ == "__main__":
@@ -194,32 +209,53 @@ if __name__ == "__main__":
     # print(sum(pathes))
 
     p1 = []
-    for str2, pos2 in zip(maps, nums):
-        num_of_q = str2.count("?")
-        print(f"checking {str2} {pos2} with {num_of_q} ?")
-        pathes = []
-        with Pool(processes=cpu_count()) as pool:
-            pathes = pool.map(
-                partial(sub_posi, stri=str2, pos=pos2), range(2**num_of_q)
-            )
-        possibilities = sum(pathes)
-        print(str2, "has", possibilities, "possibilities")
-        p1.append(possibilities)
+    # for str2, pos2 in zip(maps, nums):
+    #     num_of_q = str2.count("?")
+    #     num_of_sharp = str2.count("#")
+    #     q_needed = sum(pos2) - num_of_sharp
+    #     print(f"checking {str2} {pos2} with {num_of_q} ? and we need {q_needed} #")
+    #     pathes = []
+    #     fullset = [list(c) for c in combinations(range(num_of_q), q_needed)]
+    #     # with Pool(processes=cpu_count()) as pool:
+    #     #     pathes = pool.map(
+    #     #         partial(sub_posi, stri=str2, pos=pos2, fullset=fullset), range(comb(num_of_q, q_needed))
+    #     #     )
+    #     for i in range(comb(num_of_q, q_needed)):
+    #         pathes.append(sub_posi(i, str2, pos2, fullset))
+    #     possibilities = sum(pathes)
+    #     print(str2, "has", possibilities, "possibilities")
+    #     p1.append(possibilities)
+    # pathes = []
+    with Pool(processes=cpu_count()) as pool:
+        p1 = pool.map(
+            partial(get_conbinations2, strs=maps, poss=nums), range(len(maps))
+        )
 
     p2 = []
-    for str2, pos2 in zip(maps, nums):
-        new_str = str2 + "?" + str2
-        new_pos = pos2 * 2
-        num_of_q = new_str.count("?")
-        print(f"checking {new_str} {new_pos} with {num_of_q} ?")
-        pathes = []
-        with Pool(processes=cpu_count()) as pool:
-            pathes = pool.map(
-                partial(sub_posi, stri=new_str, pos=new_pos), range(2**num_of_q)
-            )
-        possibilities = sum(pathes)
-        print(new_str, "has", possibilities, "possibilities")
-        p2.append(possibilities)
+    # for str2, pos2 in zip(maps, nums):
+    #     new_str = str2 + "?" + str2
+    #     new_pos = pos2 * 2
+    #     num_of_q = new_str.count("?")
+    #     num_of_sharp = new_str.count("#")
+    #     q_needed = sum(new_pos) - num_of_sharp
+    #     print(f"checking {new_str} {new_pos} with {num_of_q} ? and we need {q_needed} #")
+    #     pathes = []
+    #     fullset = [list(c) for c in combinations(range(num_of_q), q_needed)]
+    #     # with Pool(processes=cpu_count()) as pool:
+    #     #     pathes = pool.map(
+    #     #         partial(sub_posi, stri=new_str, pos=new_pos, fullset=fullset), range(comb(num_of_q, q_needed))
+    #     #     )
+    #     for i in range(comb(num_of_q, q_needed)):
+    #         pathes.append(sub_posi(i, new_str, new_pos, fullset))
+    #     possibilities = sum(pathes)
+    #     print(new_str, "has", possibilities, "possibilities")
+    #     p2.append(possibilities)
+    new_maps = ["?".join((m,) * 2) for m in maps]
+    new_nums = [n * 2 for n in nums]
+    with Pool(processes=cpu_count()) as pool:
+        p2 = pool.map(
+            partial(get_conbinations2, strs=new_maps, poss=new_nums), range(len(maps))
+        )
 
     r = 0
     for r1, r2 in zip(p1, p2):
