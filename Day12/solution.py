@@ -7,7 +7,7 @@ from collections import OrderedDict
 from multiprocessing import Pool, cpu_count
 from functools import partial
 import numpy as np
-from math import comb
+from math import comb,sqrt
 from itertools import combinations
 
 
@@ -128,6 +128,17 @@ def sub_posi(i, stri, pos, fullset):
         return 1
     return 0
 
+def sub_posi1(i, stri, pos, fullset):
+    str_cp = stri
+    for qi in fullset[i]:
+        index = find_nth_occurrence(stri, "?", qi + 1)
+        str_cp = str_cp[:index] + "#" + str_cp[index + 1 :]
+    str_cp = str_cp.replace("?", ".")
+    # print(f"checking", str_cp)
+    # print("=" * 30)
+    if pos == [t.count("#") for t in list(filter(None, str_cp.split(r".")))]:
+        return [1, str_cp]
+    return [0, ""]
 
 def simplify(str, pos):
     print("simplify", str, pos)
@@ -167,6 +178,57 @@ def get_conbinations2(idx, strs, poss):
     #print(strs[idx], "has", possibilities, "possibilities")
     return possibilities
 
+def get_conbinations3(idx, strs, poss):
+    possibilities1 = get_conbinations2(idx, strs, poss)
+    possibilities2 = get_conbinations2(idx, ["?"+str for str in strs], poss)
+    
+    num_of_q = strs[idx].count("?")
+    num_of_sharp = strs[idx].count("#")
+    q_needed = sum(poss[idx]) - num_of_sharp
+    #print(f"checking {strs[idx]} {poss[idx]} with {num_of_q} ? and we need {q_needed} #")
+    pathes = []
+    fullset = [list(c) for c in combinations(range(num_of_q), q_needed)]
+    # with Pool(processes=cpu_count()) as pool:
+    #     pathes = pool.map(
+    #         partial(sub_posi, stri=str2, pos=pos2, fullset=fullset), range(comb(num_of_q, q_needed))
+    #     )
+    for i in range(comb(num_of_q, q_needed)):
+        pathes.append(sub_posi1(i, strs[idx], poss[idx], fullset))
+    possibilities = 0
+    for idx, [m, s] in enumerate(pathes):
+        if m == 1:
+            if s[-1] == "#":
+                possibilities += possibilities1
+            else:
+                possibilities += possibilities2
+    #print(strs[idx], "has", possibilities, "possibilities")
+    return possibilities
+
+def get_conbinations4(idx, strs, poss):
+    possibilities1 = get_conbinations2(idx, strs, poss)
+    possibilities2 = get_conbinations2(idx, [str+"?" for str in strs], poss)
+    
+    num_of_q = (strs[idx]+"?").count("?")
+    num_of_sharp = strs[idx].count("#")
+    q_needed = sum(poss[idx]) - num_of_sharp
+    #print(f"checking {strs[idx]} {poss[idx]} with {num_of_q} ? and we need {q_needed} #")
+    pathes = []
+    fullset = [list(c) for c in combinations(range(num_of_q), q_needed)]
+    # with Pool(processes=cpu_count()) as pool:
+    #     pathes = pool.map(
+    #         partial(sub_posi, stri=str2, pos=pos2, fullset=fullset), range(comb(num_of_q, q_needed))
+    #     )
+    for i in range(comb(num_of_q, q_needed)):
+        pathes.append(sub_posi1(i, strs[idx]+"?", poss[idx], fullset))
+    possibilities = 0
+    for idx, [m, s] in enumerate(pathes):
+        if m == 1:
+            if s[-1] == "#" and s[0] == "#":
+                continue
+            else:
+                possibilities += max(possibilities1, possibilities2)
+    #print(strs[idx], "has", possibilities, "possibilities")
+    return possibilities
 
 if __name__ == "__main__":
     maps = []
@@ -250,14 +312,21 @@ if __name__ == "__main__":
     #     possibilities = sum(pathes)
     #     print(new_str, "has", possibilities, "possibilities")
     #     p2.append(possibilities)
-    new_maps = ["?".join((m,) * 2) for m in maps]
-    new_nums = [n * 2 for n in nums]
+    # new_maps = ["?".join((m,) * 2) for m in maps]
     with Pool(processes=cpu_count()) as pool:
         p2 = pool.map(
-            partial(get_conbinations2, strs=new_maps, poss=new_nums), range(len(maps))
+            partial(get_conbinations3, strs=maps, poss=nums), range(len(maps))
         )
-
+    p3 = []
+    with Pool(processes=cpu_count()) as pool:
+        p3 = pool.map(
+            partial(get_conbinations4, strs=maps, poss=nums), range(len(maps))
+        )
+    
     r = 0
-    for r1, r2 in zip(p1, p2):
-        r += r2**4 / r1**3
+    for r1, r2, r3 in zip(p1, p2, p3):
+        print(r1, r2, r3)
+        mr = max(r2/r1, sqrt(r3))
+        r += mr**4 * r1
     print(r)
+    #print(p3)
