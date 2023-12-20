@@ -77,16 +77,20 @@ def build_possible_paths(name, rules):
         head = path
         if "->" in path:
             head = path.split("->")[0]
+        end = True
         for k, rule in rules.items():
             if head in rule.get_possible_outputs():
-                if k == "in":
-                    r.append("in->" + path)
-                else:
+                #if k == "in":
+                #    r.append("in->" + path)
+                #else:
                     #print("pushing", k + "->" + path)
                     #if k == "dp":
                     #    print("pushing", k + "->" + path)
                     #    exit()
-                    heapq.heappush(heap, k + "->" + path)
+                heapq.heappush(heap, k + "->" + path)
+                end = False
+        if end:
+            r.append(path)
     return set(r)
 
 
@@ -124,6 +128,9 @@ if __name__ == "__main__":
     all_possible_outputs = build_possible_paths("A", rules)
     #print(all_possible_outputs)
     r = 0
+    final_range = []
+    total = 0
+    nr = 0
     for path in all_possible_outputs:
         tmp = {
             "x": [1, 4000],
@@ -132,7 +139,8 @@ if __name__ == "__main__":
             "s": [1, 4000],
         }
         groups = path.split("->")
-        # print(path, groups)
+        #print(path, groups)
+
         for ix, name in enumerate(groups):
             if name == "A":
                 break
@@ -166,6 +174,8 @@ if __name__ == "__main__":
                             if i == tmp_count:
                                 new_set.append(condition)
                                 break
+                            else:
+                                new_set.append((condition[0], condition[1], condition[2], "R"))
                     new_sets.append(new_set)
             else:
                 new_sets.append(rule.conditions)
@@ -174,7 +184,7 @@ if __name__ == "__main__":
             for new_set in new_sets:
                 tmp_copy = copy.deepcopy(tmp)
                 for condition in new_set:
-                    # print("handdling", condition)
+                    #print("handdling", condition)
                     if condition[0] is None:
                         break
                     elif condition[3] == next:
@@ -195,25 +205,60 @@ if __name__ == "__main__":
                         else:
                             tmp_copy[condition[0]][0] = max(tmp_copy[condition[0]][0], condition[2])
                 tmp_set.append(tmp_copy)
+            if next == "A":
+                fset = set()
+                #if len(tmp_set) > 1:
+                #    print(f" {len(tmp_set)}    tmp_set: {tmp_set}")
+                #print(f"path:{path} set: {tmp_set}")
+                for tmp_copy in tmp_set:
+                    tv = 1
+                    for k, v in tmp_copy.items():
+                        diff = v[1] - v[0] + 1
+                        if diff <= 0:
+                            tv = 0
+                            break
+                        tv *= diff
+                    nr += tv
+            else:
+                tmp = tmp_set[0] 
+    print(nr)
+    exit()
 
-            max_i = -1
-            max_v = -1
-            #if len(tmp_set) > 1:
-                #print(f"    tmp_set: {tmp_set}")
-            for i, tmp_copy in enumerate(tmp_set):
-                tv = 1
-                for k, v in tmp_copy.items():
-                    diff = v[1] - v[0] + 1
-                    if diff <= 0:
-                        break
-                    tv *= diff
-                if tv > max_v and i >= 0:
-                    max_v = tv
-                    max_i = i
-            tmp = tmp_set[max_i]
-        print(path, tmp)
-        mr = 1
-        for k, v in tmp.items():
+
+
+            # max_i = -1
+            # max_v = -1
+            # if len(tmp_set) > 1:
+            #     print(f"    tmp_set: {tmp_set}")
+            # for i, tmp_copy in enumerate(tmp_set):
+            #     tv = 1
+            #     for k, v in tmp_copy.items():
+            #         diff = v[1] - v[0] + 1
+            #         if diff <= 0:
+            #             break
+            #         tv *= diff
+            #     if tv > max_v and i >= 0:
+            #         max_v = tv
+            #         max_i = i
+            # tmp = tmp_set[max_i]
+            # if len(tmp_set) > 1:
+            #     total += len(tmp_set) 
+        # print(path, tmp)
+        # mr = 1
+        # for k, v in tmp.items():
+        #     diff = v[1] - v[0] + 1
+        #     if diff <= 0:
+        #         print("error", path)
+        #         exit()
+        #     mr *= diff
+        # if mr >= 0:
+        #     r += mr
+        # else:
+        #     print("error", path)
+        # final_range.append(tmp)
+    mr = 1
+    for range in final_range:
+        for k, v in range.items():
             diff = v[1] - v[0] + 1
             if diff <= 0:
                 print("error", path)
@@ -223,4 +268,27 @@ if __name__ == "__main__":
             r += mr
         else:
             print("error", path)
-    print(r)
+    print(len(final_range))
+    #print(r)
+    minus = 0
+    for ix, item1 in enumerate(final_range):
+        for item2 in final_range[ix + 1:]:
+            overlap_copy = copy.deepcopy(item1)
+            for key in ["x", "m", "a", "s"]:
+                overlap_copy[key][0] = max(overlap_copy[key][0], item2[key][0])
+                overlap_copy[key][1] = min(overlap_copy[key][1], item2[key][1])
+            add_to_minus = True
+            tt = 1
+            for key in ["x", "m", "a", "s"]:
+                if overlap_copy[key][0] > overlap_copy[key][1]:
+                    add_to_minus = False
+                    tt = 1
+                    break
+                else:
+                    tt *= (overlap_copy[key][1] - overlap_copy[key][0] + 1)
+                    
+            if add_to_minus:
+                #print("overlap", overlap_copy)
+                minus += tt
+    print(minus)
+    print(r - minus)
