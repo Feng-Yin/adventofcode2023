@@ -49,29 +49,6 @@ def count_high_low(heap):
 
     return high, low
 
-def single_low(heap, name):
-    # low pulse is sent to name
-    for item in heap:
-        if item[1] == 0 and item[2] == name:
-            return True
-    return False
-
-def single_high(heap, name):
-    # high pulse is sent to name
-    for item in heap:
-        if item[1] == 1 and item[2] == name:
-            return True
-    return False
-
-def print_to(names, current_heap, status):
-    count = 0
-    for item in current_heap:
-        if item[2] in names:
-            #print(f"{item[0]} -{"high" if item[1] == 1 else "low"}-> {item[2]}")
-            if item[1] == status:
-                count += 1
-    return count
-
 def check_map(names, map, status):
     count = 0
     for name in names:
@@ -103,7 +80,6 @@ if __name__ == "__main__":
             if ck in v.listeners:
                 cv.inputs[k] = 0
     #print(all_map)
-    all_map_copy = copy.deepcopy(all_map)
     count = 0
     current_heap = []
     next_heap = []
@@ -112,68 +88,48 @@ if __name__ == "__main__":
     bc=0
     cc=0
     dc=0
-    #while count == 0 or all_map != all_map_copy:
+    #####################################
+    # part 2
     while True:
+    #####################################
+    # part 1
     #for i in range(1000):
+    #####################################
+        if count == 1000:
+            print(f"part 1: {high*low}")
         count += 1
         heapq.heappush(next_heap, ("button", 0, "broadcaster"))
         while len(next_heap) > 0:
             current_heap = copy.deepcopy(next_heap)
             next_heap = []
+            #####################################
+            # part 1
             #print_heap(current_heap)
-            #h, l = count_high_low(current_heap)
-            #high += h
-            #low += l
-            # if single_low(current_heap, "dx"):
-            #     print(f"dx count:{count}")
-            #     #exit()
-            # if single_low(current_heap, "ck"):
-            #     print(f"ck count:{count}")
-            #     #exit()
-            # if single_low(current_heap, "cs"):
-            #     print(f"cs count:{count}")
-            #     #exit()
-            # if single_low(current_heap, "jh"):
-            #     print(f"jh count:{count}")
-            #     #exit()
-            # if single_high(current_heap, "mp"):
-            #     print(f"mp count:{count}")
-            #     #exit()
-            # if single_high(current_heap, "qt"):
-            #     print(f"qt count:{count}")
-            #     #exit()
-            # if single_high(current_heap, "qb"):
-            #     print(f"qb count:{count}")
-            #     #exit()
-            # if single_high(current_heap, "ng"):
-            #     print(f"ng count:{count}")
-            #     #exit()
-            #if single_low(current_heap, "dr"):
-            #   print(f"dr count:{count}")
-            #   #exit()
-            # if single_low(current_heap, "rx"):
-            #     print(f"rx count:{count}")
-            #     #exit()
-            # print_to(["dr"], current_heap)
+            h, l = count_high_low(current_heap)
+            high += h
+            low += l
+            #####################################
+            # part 2
             a = ['zz', 'ch', 'qp', 'rm', 'dd', 'tn', 'rr', 'xz']
             b = ['rj', 'hr', 'pl', 'rk', 'cg', 'kd', 'xq', 'km', 'ns']
             c = ['ls', 'pq', 'kk', 'pj', 'pr', 'tl', 'tc', 'vn', 'pm', 'jd']
             d = ['st', 'gg', 'cr', 'fl', 'rz', 'jg', 'sg', 'ps', 'nx']
             if ac == 0 and check_map(a, all_map, 1) == len(a):
-                print(f"a count:{count}")
+                #print(f"a count:{count}")
                 ac = count
             if bc == 0 and check_map(b, all_map, 1) == len(b):
-                print(f"b count:{count}")
+                #print(f"b count:{count}")
                 bc = count
             if cc == 0 and check_map(c, all_map, 1) == len(c):
-                print(f"c count:{count}")
+                #print(f"c count:{count}")
                 cc = count
             if dc == 0 and check_map(d, all_map, 1) == len(d):
-                print(f"d count:{count}")
+                #print(f"d count:{count}")
                 dc = count
             if ac != 0 and bc != 0 and cc != 0 and dc != 0:
-                print(f"{ac*bc*cc*dc}")
+                print(f"part 2: {ac*bc*cc*dc}")
                 exit()
+            #####################################
             while len(current_heap) > 0:
                 source, input, destination = heapq.heappop(current_heap)
                 if destination not in all_map:
@@ -193,4 +149,3 @@ if __name__ == "__main__":
                     output = 0 if len(module.inputs) == sum(module.inputs.values()) else 1
                     for listener in module.listeners:
                         heapq.heappush(next_heap, (module.name, output, listener))
-    print(high*low)
